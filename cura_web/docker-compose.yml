@@ -1,0 +1,58 @@
+services:
+  cura_db:
+    image: postgres:16-alpine
+    container_name: cura_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      TZ: ${TZ}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "${POSTGRES_PORT}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - pwn20wnd-network
+
+  cura_backend:
+    build: ./backend
+    container_name: cura_backend
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: "postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@cura_db:5432/${POSTGRES_DB}"
+      SECRET_KEY: ${SECRET_KEY}
+      TZ: ${TZ}
+    ports:
+      - "${BACKEND_PORT}:8000"
+    volumes:
+      - uploads_data:/app/uploads
+    depends_on:
+      cura_db:
+        condition: service_healthy
+    networks:
+      - pwn20wnd-network
+
+  cura_frontend:
+    build: ./frontend
+    container_name: cura_frontend
+    restart: unless-stopped
+    ports:
+      - "${FRONTEND_PORT}:80"
+    depends_on:
+      - cura_backend
+    networks:
+      - pwn20wnd-network
+
+volumes:
+  postgres_data:
+  uploads_data:
+
+networks:
+  pwn20wnd-network:
+    external: true

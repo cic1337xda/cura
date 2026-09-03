@@ -1,0 +1,28 @@
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Python
+*.pyc
+__pycache__/
+*.pyo
+*.pyd
+*.egg-info/
+.pytest_cache/
+venv/
+env/
+
+# Node & Frontend
+node_modules/
+dist/
+npm-debug.log
+yarn-error.log
+
+# Database
+postgres_data/
+uploads/
+
+# OS / Logs
+.DS_Store
+*.log

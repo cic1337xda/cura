@@ -1,0 +1,48 @@
+# ── Secrets ──────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+
+# ── Python ───────────────────────────────────────────────
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.pytest_cache/
+venv/
+env/
+
+# ── Node / Frontend build ───────────────────────────────
+node_modules/
+dist/
+npm-debug.log
+yarn-error.log
+
+# ── Local data / runtime ────────────────────────────────
+postgres_data/
+uploads/
+*.log
+
+# ── OS files ─────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── Non-deliverable folders ─────────────────────────────
+# Legacy / inspiration source code (not part of the shipped product)
+Reference/
+
+# Testing sandboxes and one-off experiments
+Esp32 & Testing codes/
+
+# Older backups — kept off the repository
+Backups/
+
+# Local opencode session notes
+ocsession.txt
+
+# ── Flutter (cura_app) sanity guards ────────────────────
+# (cura_app/.gitignore also covers these)
+cura_app/build/
+cura_app/.dart_tool/
+cura_app/.idea/

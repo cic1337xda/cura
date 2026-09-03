@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Native application base identifiers -->
+    <string name="app_name">cura_app</string>
+    
+    <!-- Core Host Card Emulation string resource definitions to satisfy AAPT manifest constraints -->
+    <string name="hce_service_description">Cura Core Host Card Emulation Subsystem Architecture</string>
+    <string name="hce_aid_group_description">Cura Secure Patient Token Encryption Matrix</string>
+</resources>
