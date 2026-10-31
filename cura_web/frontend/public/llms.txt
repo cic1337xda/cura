@@ -1,0 +1,24 @@
+# Cura. HMS (Hospital Management Information System)
+
+> Cura. HMS is a modern, full-stack Hospital Management Information System integrated with dual-mode NFC smart card reading and writing for patients and clinical staff.
+
+## Core Capabilities
+- Patient Records Management: registration, admission, discharge, re-admission, NRIC/MyKad hardware UID tracking (`CF289949`), nationality (`Malaysian` vs `Non-Malaysian`).
+- Clinical Workflows: vital signs recording, laboratory diagnostics, digital prescriptions, surgery schedule, comprehensive medical history.
+- Pharmacy & Inventory: pharmaceutical stock tracking, drug category management, barcode verification.
+- Staff Management & Operations: doctor credentials, employee payroll generation, vendor directory, equipment asset tracking, payable/receivable accounts.
+- Physical NFC Integration:
+  - Web NFC (`NDEFReader`) on mobile devices for reading physical cards.
+  - Web Serial API on desktop browsers connecting directly to an ESP32-S3 microcontroller with Adafruit PN532 transceiver for live tag scanning and Mifare CUID Block 0 writing.
+  - Companion Android Flutter app (`cura_app`) emulating patient cards via Host Card Emulation (HCE APDU AID `F222222222`).
+
+## Architecture & Technology
+- Frontend: Vue 3 SPA, Vite build tool, Pinia state management, Liquid Glass Apple-inspired UI design system.
+- Backend: FastAPI (Python 3.12+), asynchronous SQLAlchemy 2.0 ORM, PostgreSQL 16 database.
+- Hardware Scanner: ESP32-S3 running native USB CDC (Web Serial) & USB HID keyboard firmware.
+
+## Public Web Routes
+- `/`: Public Welcome page
+- `/login`: Admin & Doctor authentication portal
+- `/privacy`: Patient data privacy & confidentiality policy
+- `/dashboard`: Operations overview with interactive statistic cards

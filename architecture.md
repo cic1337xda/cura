@@ -1,5 +1,11 @@
 # Cura. HMS — System Architecture
 
+## 📑 Language Options / Pilihan Bahasa
+* 🇬🇧 **[English Documentation (Current)](architecture.md)**
+* 🇲🇾 **[Dokumentasi Bahasa Melayu](architecture_MY.md)**
+
+---
+
 ## Overview
 
 Cura. HMS is a Hospital Management Information System (HMIS) that combines three components:
@@ -108,6 +114,12 @@ race conditions from the browser. The form pre-fills the next number, e.g. if
 | Vendor | `C07A` | `C07A0001` |
 | Account | `C08A` | `C08A0001` |
 | Payroll | `C09A` | `C09A0001` |
+
+### Physical IC Card / MyKad RFID Support
+In addition to the normalized CUID tags (`C00A0001`), the system supports scanning and linking physical government identity cards (e.g., Malaysian MyKad with hardware chip UID like `CF289949`).
+- Stored under `patients.ic_card_uid` and `doctors.ic_card_uid`.
+- Both the search bar and the registration forms allow direct one-tap scanning of physical IC cards.
+- Searching by IC UID instantly finds the matching patient or doctor record alongside normal patient IDs.
 
 ### Core tables
 
@@ -223,3 +235,8 @@ Flutter app emulating an NFC card through Android **Host Card Emulation (HCE)**.
 - Responds with `<patient_id> 90 00` (success status word).
 
 See `known_bugs.md` for Android/Samsung HCE quirks and fixes.
+
+---
+
+## 📜 License
+* Developed for **Educational Purposes Only**.

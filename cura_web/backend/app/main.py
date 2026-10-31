@@ -1,3 +1,5 @@
+from datetime import datetime
+from zoneinfo import ZoneInfo
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -6,6 +8,7 @@ from sqlalchemy import select, func, text
 from sqlalchemy.exc import ProgrammingError
 from app.core.database import engine, Base, async_session
 from app.core.security import hash_password
+from app.core.middleware import SecurityAndTracingMiddleware
 from app.models.admin import Admin
 from app.routers import auth, patients, doctors, pharmacy, laboratory, records, operations
 
@@ -33,7 +36,11 @@ async def run_migrations():
         for col_sql in [
             "ALTER TABLE patients ADD COLUMN IF NOT EXISTS photo VARCHAR(500)",
             "ALTER TABLE patients ADD COLUMN IF NOT EXISTS ic_number VARCHAR(50)",
+            "ALTER TABLE patients ADD COLUMN IF NOT EXISTS ic_card_uid VARCHAR(50)",
+            "ALTER TABLE patients ADD COLUMN IF NOT EXISTS nationality VARCHAR(100) DEFAULT 'Malaysian'",
             "ALTER TABLE doctors ADD COLUMN IF NOT EXISTS ic_number VARCHAR(50)",
+            "ALTER TABLE doctors ADD COLUMN IF NOT EXISTS ic_card_uid VARCHAR(50)",
+            "ALTER TABLE doctors ADD COLUMN IF NOT EXISTS nationality VARCHAR(100) DEFAULT 'Malaysian'",
         ]:
             try:
                 await conn.execute(text(col_sql))
@@ -61,6 +68,7 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+app.add_middleware(SecurityAndTracingMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -86,5 +94,18 @@ async def root():
 
 
 @app.get("/health")
+@app.get("/api/v1/health")
 async def health():
-    return {"status": "healthy"}
+    db_status = "connected"
+    try:
+        async with async_session() as db:
+            await db.execute(text("SELECT 1"))
+    except Exception:
+        db_status = "disconnected"
+
+    kl_now = datetime.now(ZoneInfo("Asia/Kuala_Lumpur"))
+    return {
+        "status": "healthy" if db_status == "connected" else "degraded",
+        "database": db_status,
+        "timestamp": kl_now.isoformat(),
+    }

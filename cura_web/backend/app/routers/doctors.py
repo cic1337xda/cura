@@ -36,6 +36,7 @@ async def create_doctor(body: DoctorCreate, db: AsyncSession = Depends(get_db)):
     existing = await db.execute(select(Doctor).where(Doctor.employee_number == employee_number))
     if existing.scalar_one_or_none():
         raise HTTPException(status_code=400, detail="Employee number already exists")
+    ic_card = (body.ic_card_uid or "").strip().upper() or None
     doc = Doctor(
         first_name=body.first_name,
         last_name=body.last_name,
@@ -43,6 +44,8 @@ async def create_doctor(body: DoctorCreate, db: AsyncSession = Depends(get_db)):
         password=hash_password(body.password),
         department=body.department,
         ic_number=body.ic_number,
+        ic_card_uid=ic_card,
+        nationality=body.nationality or "Malaysian",
         employee_number=employee_number,
     )
     db.add(doc)
@@ -71,6 +74,10 @@ async def update_doctor(doctor_id: str, body: DoctorCreate, db: AsyncSession = D
     d.email = body.email
     d.department = body.department
     d.ic_number = body.ic_number
+    if body.nationality is not None:
+        d.nationality = body.nationality
+    if body.ic_card_uid is not None:
+        d.ic_card_uid = body.ic_card_uid.strip().upper() or None
     if body.employee_number:
         d.employee_number = body.employee_number
     if body.password:

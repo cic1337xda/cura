@@ -1,5 +1,11 @@
 # Known Bugs & Fixes — Cura. HMS
 
+## 📑 Language Options / Pilihan Bahasa
+* 🇬🇧 **[English Documentation (Current)](known_bugs.md)**
+* 🇲🇾 **[Dokumentasi Bahasa Melayu](known_bugs_MY.md)**
+
+---
+
 ## 1. PN532 `inDataExchange` Always Fails After `readPassiveTargetID()`
 
 **Symptom:**
@@ -116,3 +122,38 @@ READ
 
 The firmware intentionally handles the **reversed-order sticker** quirk in
 `uidMatches()` (physical stickers often print/route bytes reversed).
+
+---
+
+## 5. Phone Cannot Read HCE Cards (Web NFC limitation — not a bug)
+
+**Symptom:**
+- Physical card scans fine on a phone (Android Chrome, Web NFC).
+- The `cura_app` HCE card (e.g. Samsung) fails with `Scan Failed — could not
+  read patient ID from this tag`.
+- The same HCE card works on the ESP32-S3 / PN532 reader.
+
+**Root Cause:**
+The `cura_app` uses Android **Host Card Emulation (HCE)**. It presents a **random
+privacy UID** (`08xxxxx`) and only reveals the patient ID when a reader issues a
+**SELECT AID APDU** (`F222222222`).
+
+The browser **Web NFC API (`NDEFReader`)** cannot perform APDU exchange and cannot
+read HCE tags — it only reads NDEF-formatted *physical* tags. HCE requires a full
+ISO-DEP reader (the PN532).
+
+**Resolution:**
+- Phone → physical cards only (read raw UID).
+- ESP32-S3 / PN532 → physical cards **and** HCE phones.
+- Reading HCE on a phone requires a native Android reader (Kotlin,
+  `NfcAdapter.enableReaderMode` with ISO-DEP), not a web page.
+
+| Reader | Physical card | HCE phone (cura_app) |
+|--------|:---:|:---:|
+| Phone (Web NFC) | ✅ | ❌ |
+| ESP32-S3 / PN532 | ✅ | ✅ |
+
+---
+
+## 📜 License
+* Developed for **Educational Purposes Only**.

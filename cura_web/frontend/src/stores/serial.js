@@ -42,7 +42,7 @@ export const useSerialStore = defineStore('serial', () => {
     if (!text) return
 
     if (text.startsWith('[WEB_READ]:')) {
-      const uid = text.split(':')[1]
+      const uid = text.substring(text.indexOf(':') + 1).trim()
       if (uid) emitRead(uid)
     } else if (text === '[UI_ARMED]' || text.startsWith('[ARMED]')) {
       emitStatus('armed', 'Device armed! Please TAP your tag on the reader now...')

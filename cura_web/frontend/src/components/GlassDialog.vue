@@ -6,7 +6,7 @@
 
         <template v-if="dialogState.type === 'image'">
           <div style="margin: 16px 0; border-radius: 16px; overflow: hidden; max-height: 320px; display: flex; align-items: center; justify-content: center; background: var(--bg-card-hover);">
-            <img :src="dialogState.imageSrc" style="max-width: 100%; max-height: 320px; object-fit: contain;" />
+            <img :src="dialogState.imageSrc" alt="Clinical Photo Preview" style="max-width: 100%; max-height: 320px; object-fit: contain;" />
           </div>
           <p style="font-size: 14px; color: var(--text-secondary); margin-bottom: 8px;">Use this photo?</p>
         </template>

@@ -47,6 +47,9 @@ async def list_patients(
     if search:
         q = q.where(
             (Patient.patient_number.ilike(f"%{search}%"))
+            | (Patient.ic_card_uid.ilike(f"%{search}%"))
+            | (Patient.ic_number.ilike(f"%{search}%"))
+            | (Patient.nationality.ilike(f"%{search}%"))
             | (Patient.first_name.ilike(f"%{search}%"))
             | (Patient.last_name.ilike(f"%{search}%"))
         )
@@ -61,6 +64,8 @@ async def search_patients(q: str, db: AsyncSession = Depends(get_db)):
         select(Patient)
         .where(
             (Patient.patient_number.ilike(f"%{q}%"))
+            | (Patient.ic_card_uid.ilike(f"%{q}%"))
+            | (Patient.ic_number.ilike(f"%{q}%"))
             | (Patient.first_name.ilike(f"%{q}%"))
             | (Patient.last_name.ilike(f"%{q}%"))
         )
@@ -78,11 +83,14 @@ async def create_patient(body: PatientCreate, db: AsyncSession = Depends(get_db)
     existing = await db.execute(select(Patient).where(Patient.patient_number == patient_number))
     if existing.scalar_one_or_none():
         raise HTTPException(status_code=400, detail="Patient number already exists")
+    ic_card = (body.ic_card_uid or "").strip().upper() or None
     patient = Patient(
         first_name=body.first_name, last_name=body.last_name,
         date_of_birth=body.date_of_birth, age=body.age,
         patient_number=patient_number, address=body.address, phone=body.phone,
         ic_number=body.ic_number,
+        ic_card_uid=ic_card,
+        nationality=body.nationality or "Malaysian",
         patient_type=PatientType(body.patient_type), ailment=body.ailment,
     )
     db.add(patient)
@@ -105,8 +113,11 @@ async def update_patient(patient_id: str, body: PatientCreate, db: AsyncSession 
     result = await db.execute(select(Patient).where(Patient.id == _uuid.UUID(patient_id)))
     p = result.scalar_one_or_none()
     if not p: raise HTTPException(status_code=404, detail="Patient not found")
-    for key in ["first_name", "last_name", "date_of_birth", "age", "address", "phone", "ic_number", "ailment"]:
-        setattr(p, key, getattr(body, key, None))
+    for key in ["first_name", "last_name", "date_of_birth", "age", "address", "phone", "ic_number", "ic_card_uid", "nationality", "ailment"]:
+        val = getattr(body, key, None)
+        if key == "ic_card_uid" and isinstance(val, str):
+            val = val.strip().upper() or None
+        setattr(p, key, val)
     p.patient_type = PatientType(body.patient_type)
     await db.commit(); await db.refresh(p)
     return p

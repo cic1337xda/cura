@@ -96,6 +96,12 @@ html.dark .orb { opacity: 0.2; }
 .btn-outline:hover { background: rgba(0,122,255,0.08); }
 .btn-danger { background: var(--ios-red); }
 .btn-sm { padding: 8px 16px; font-size: 13px; border-radius: 12px; }
+.btn-text {
+  background: none; border: none; color: var(--ios-blue);
+  cursor: pointer; font-size: inherit; font-family: inherit;
+  padding: 0; text-decoration: none;
+}
+.btn-text:hover { text-decoration: underline; opacity: 0.85; }
 
 /* ─── Inputs ───────────────────────────────────── */
 .input {
@@ -278,3 +284,59 @@ html.dark .sidebar { box-shadow: 0 25px 60px rgba(0,0,0,0.5); }
   color: var(--ios-red); text-decoration: none; font-size: 13px; font-weight: 500;
 }
 .sidebar-footer a:hover { opacity: 0.8; }
+
+/* ─── Bottom-Right Glass Corner Badge ─────────── */
+.glass-corner-footer {
+  position: fixed;
+  bottom: 20px;
+  right: 24px;
+  z-index: 95;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  backdrop-filter: blur(var(--blur));
+  -webkit-backdrop-filter: blur(var(--blur));
+  box-shadow: var(--shadow);
+  user-select: none;
+  pointer-events: auto;
+  transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.glass-corner-footer:hover {
+  background: var(--bg-card-hover);
+  color: var(--text);
+  border-color: rgba(0, 122, 255, 0.35);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
+}
+html.dark .glass-corner-footer:hover {
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+}
+.glass-corner-footer a {
+  color: var(--ios-blue);
+  text-decoration: none;
+  font-weight: 600;
+  transition: opacity 0.2s;
+}
+.glass-corner-footer a:hover {
+  opacity: 0.8;
+  text-decoration: underline;
+}
+.glass-corner-footer .footer-dot {
+  opacity: 0.35;
+  font-size: 10px;
+}
+@media (max-width: 640px) {
+  .glass-corner-footer {
+    bottom: 12px;
+    right: 12px;
+    font-size: 11px;
+    padding: 6px 12px;
+  }
+}

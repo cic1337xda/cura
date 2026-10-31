@@ -91,6 +91,16 @@ const routes = [
     component: () => import('../views/SettingsPage.vue'),
     meta: { requiresAuth: true }
   },
+  {
+    path: '/privacy',
+    component: () => import('../views/PrivacyPage.vue'),
+    meta: { guest: false }
+  },
+  {
+    path: '/:pathMatch(.*)*',
+    component: () => import('../views/NotFoundPage.vue'),
+    meta: { guest: false }
+  },
 ]
 
 const router = createRouter({

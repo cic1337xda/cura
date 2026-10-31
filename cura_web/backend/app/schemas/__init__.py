@@ -41,6 +41,8 @@ class DoctorCreate(BaseModel):
     password: str
     department: str | None = None
     ic_number: str | None = None
+    ic_card_uid: str | None = None
+    nationality: str | None = "Malaysian"
     employee_number: str | None = None
 
 
@@ -51,6 +53,8 @@ class DoctorOut(BaseModel):
     email: str
     department: str | None
     ic_number: str | None = None
+    ic_card_uid: str | None = None
+    nationality: str | None = "Malaysian"
     employee_number: str
     avatar: str | None
 
@@ -69,6 +73,8 @@ class PatientOut(BaseModel):
     address: str | None
     phone: str | None
     ic_number: str | None = None
+    ic_card_uid: str | None = None
+    nationality: str | None = "Malaysian"
     patient_type: str
     ailment: str | None
     discharge_status: str | None
@@ -87,6 +93,8 @@ class PatientCreate(BaseModel):
     address: str | None = None
     phone: str | None = None
     ic_number: str | None = None
+    ic_card_uid: str | None = None
+    nationality: str | None = "Malaysian"
     patient_type: str = "OutPatient"
     ailment: str | None = None
     patient_number: str | None = None

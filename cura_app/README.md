@@ -5,6 +5,10 @@ digital **NFC patient card** using Android **Host Card Emulation (HCE)**.
 Instead of (or alongside) a physical Mifare card, a patient can present their
 phone to the clinic's ESP32-S3 reader to be identified instantly.
 
+## 📑 Language Options / Pilihan Bahasa
+* 🇬🇧 **[English Documentation (Current)](README.md)**
+* 🇲🇾 **[Dokumentasi Bahasa Melayu](README_MY.md)**
+
 ---
 
 ## How it works
@@ -63,3 +67,8 @@ Requires Android with NFC and HCE support.
   Settings → Connections → NFC → **Tap & Pay** for HCE routing to work.
 
 See the top-level [`known_bugs.md`](../known_bugs.md) for detailed fixes.
+
+---
+
+## 📜 License
+* Developed for **Educational Purposes Only**.

@@ -26,11 +26,25 @@
         <router-link to="/payrolls" class="sidebar-link" :class="{ active: $route.path === '/payrolls' }" @click="sidebarOpen = false">Payrolls</router-link>
         <router-link to="/settings" class="sidebar-link" :class="{ active: $route.path === '/settings' }" @click="sidebarOpen = false">Settings</router-link>
       </nav>
-      <div class="sidebar-footer"><a href="#" @click.prevent="logout">Sign Out</a></div>
+      <div class="sidebar-footer">
+        <div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 12px; display: flex; justify-content: center; gap: 8px;">
+          <span>© {{ currentYear }} Cura.</span>
+          <span>•</span>
+          <router-link to="/privacy" style="font-size: 11px; color: var(--text-secondary);" @click="sidebarOpen = false">Privacy</router-link>
+        </div>
+        <button type="button" class="btn btn-sm btn-outline" style="width: 100%; justify-content: center; color: var(--ios-red); border-color: rgba(255,59,48,0.3);" @click.prevent="logout">Sign Out</button>
+      </div>
     </aside>
 
     <div class="page"><router-view /></div>
     <GlassDialog />
+
+    <!-- Bottom-Right Glass Corner Badge -->
+    <div class="glass-corner-footer">
+      <span>© {{ currentYear }} Cura. HMS</span>
+      <span class="footer-dot">•</span>
+      <router-link to="/privacy">Privacy Policy</router-link>
+    </div>
   </div>
 </template>
 
@@ -44,6 +58,7 @@ const router = useRouter()
 const route = useRoute()
 const sidebarOpen = ref(false)
 const isGuest = computed(() => route.meta.guest === true)
+const currentYear = new Date().getFullYear()
 
 function logout() {
   localStorage.removeItem('cura_token')

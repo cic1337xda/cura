@@ -11,7 +11,6 @@ if (typeof navigator !== 'undefined') {
 }
 
 const isMobile = /Android|iPhone|iPad|iPod|Windows Phone|BlackBerry|webOS/i.test(ua)
-  || (touchPoints > 1 && !/Macintosh|Windows NT/i.test(ua))
 
 export function useDevice() {
   const nfcSupported = computed(() => typeof window !== 'undefined' && 'NDEFReader' in window)

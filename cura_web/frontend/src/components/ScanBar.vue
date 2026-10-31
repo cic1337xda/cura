@@ -4,7 +4,7 @@
       type="button"
       class="scan-btn"
       :class="{ active: phoneScanning }"
-      :disabled="!device.canUsePhoneNfc.value"
+      :disabled="!canUsePhone"
       :title="phoneTitle"
       @click="phoneScan"
     >
@@ -21,7 +21,7 @@
       type="button"
       class="scan-btn"
       :class="{ active: espScanning }"
-      :disabled="!device.canUseEsp32.value"
+      :disabled="!canUseEsp"
       :title="espTitle"
       @click="espScan"
     >
@@ -36,7 +36,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useDevice } from '../composables/useDevice'
 import { useSerialStore } from '../stores/serial'
 import { useDialog } from '../composables/useDialog'
@@ -47,11 +47,22 @@ const device = useDevice()
 const serial = useSerialStore()
 const dialog = useDialog()
 
+const canUsePhone = computed(() => device.canUsePhoneNfc.value)
+const canUseEsp = computed(() => device.canUseEsp32.value)
+
 const phoneScanning = ref(false)
 const espScanning = ref(false)
 let nfcAbort = null
 let nfcTimeout = null
 let nfcTimedOut = false
+let offRead = null
+
+onMounted(() => {
+  offRead = serial.onRead((uid) => {
+    // If a card is tapped while serial is connected, emit scan immediately!
+    emit('scan', uid)
+  })
+})
 
 const phoneTitle = computed(() => {
   if (!device.nfcSupported.value) return 'Web NFC is not supported in this browser'
@@ -92,8 +103,14 @@ async function phoneScan() {
           return
         }
       }
-      const uid = serialNumber || 'unknown'
-      dialog.alertMsg(`Tag UID: ${uid}\nNo patient ID found — this is a physical card, not a Cura digital card.`, 'NFC Scan')
+      // No NDEF text record — it's a physical card. Its UID *is* the patient ID
+      // (e.g. c0:0a:00:02 -> C00A0002), so treat it as such.
+      const uid = (serialNumber || '').replace(/:/g, '').toUpperCase()
+      if (uid && uid.length >= 8) {
+        emit('scan', uid)
+      } else {
+        dialog.alertMsg(`Could not read an ID from this tag (UID: ${serialNumber || 'unknown'}).`, 'NFC Scan')
+      }
     })
 
     ndef.addEventListener('readingerror', () => {
@@ -121,7 +138,7 @@ async function espScan() {
     if (!opened) { dialog.alertMsg(serial.error || 'Connection failed.', 'ESP32'); return }
   }
   espScanning.value = true
-  const uid = await serial.readOnce(15000)
+  const uid = await serial.readOnce(8000)
   espScanning.value = false
   if (!uid) {
     dialog.alertMsg('No tag detected. Tap the card on the ESP32 reader.', 'Scan Timeout')
@@ -131,6 +148,7 @@ async function espScan() {
 }
 
 onUnmounted(() => {
+  if (offRead) offRead()
   clearTimeout(nfcTimeout)
   if (nfcAbort) nfcAbort.abort()
 })
@@ -147,11 +165,11 @@ onUnmounted(() => {
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  padding: 9px 14px;
+  padding: 8px 14px;
   border-radius: 14px;
-  border: 1.5px solid var(--border);
-  background: var(--bg-card);
-  color: var(--text);
+  border: 1.5px solid rgba(0, 122, 255, 0.3);
+  background: rgba(0, 122, 255, 0.08);
+  color: var(--ios-blue);
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
@@ -159,12 +177,23 @@ onUnmounted(() => {
   transition: all 0.2s;
   white-space: nowrap;
 }
-.scan-btn:hover:not(:disabled) { transform: translateY(-1px); border-color: var(--ios-blue); color: var(--ios-blue); }
-.scan-btn.active { border-color: var(--ios-blue); color: var(--ios-blue); background: rgba(0,122,255,0.12); }
+.scan-btn:hover:not(:disabled) {
+  background: var(--ios-blue);
+  color: #fff;
+  border-color: var(--ios-blue);
+  transform: translateY(-1px);
+}
+.scan-btn.active {
+  background: var(--ios-orange);
+  color: #fff;
+  border-color: var(--ios-orange);
+}
 .scan-btn:disabled {
-  opacity: 0.45;
+  opacity: 0.35;
   cursor: not-allowed;
-  filter: grayscale(0.4);
+  border-color: var(--border);
+  background: var(--bg-card);
+  color: var(--text-secondary);
 }
 .scan-icon { width: 18px; height: 18px; }
 </style>

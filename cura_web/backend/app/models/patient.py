@@ -23,6 +23,8 @@ class Patient(Base):
     patient_number: Mapped[str] = mapped_column(String(200), unique=True)
     address: Mapped[str | None] = mapped_column(String(200))
     ic_number: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    ic_card_uid: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    nationality: Mapped[str | None] = mapped_column(String(100), default="Malaysian", nullable=True)
     phone: Mapped[str | None] = mapped_column(String(200))
     patient_type: Mapped[PatientType] = mapped_column(SAEnum(PatientType))
     ailment: Mapped[str | None] = mapped_column(String(200))

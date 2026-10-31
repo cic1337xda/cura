@@ -1,12 +1,12 @@
 <template>
   <div class="login-wrap">
     <div class="login-card glass">
-      <h2>{{ isDoctor ? 'Doctor Login' : 'Admin Login' }}</h2>
+      <h1 style="font-size: 26px; font-weight: 900; letter-spacing: -0.5px; margin-bottom: 8px;">{{ isDoctor ? 'Doctor Login' : 'Admin Login' }}</h1>
       <p class="sub">{{ isDoctor ? 'Sign in with your employee number' : 'Sign in to manage the hospital system' }}</p>
       <form @submit.prevent="handleLogin">
         <label class="input-label">{{ isDoctor ? 'EMPLOYEE NUMBER' : 'EMAIL' }}</label>
-        <input v-if="isDoctor" v-model="form.employee_number" class="input" placeholder="e.g. YDS7L" required />
-        <input v-else v-model="form.email" type="email" class="input" placeholder="admin@hospital.com" required />
+        <input v-if="isDoctor" v-model="form.employee_number" class="input" placeholder="e.g. C01A0001" required />
+        <input v-else v-model="form.email" type="email" class="input" placeholder="admin@mail.com" required />
         <div style="margin-top: 16px;">
           <label class="input-label">PASSWORD</label>
           <input v-model="form.password" type="password" class="input" placeholder="Enter password" required />
@@ -17,7 +17,9 @@
         </button>
       </form>
       <div style="margin-top: 16px; text-align: center; font-size: 13px;">
-        <a href="#" @click.prevent="isDoctor = !isDoctor">{{ isDoctor ? 'Admin login instead' : 'Doctor login instead' }}</a>
+        <button type="button" class="btn-text" @click="isDoctor = !isDoctor">
+          {{ isDoctor ? 'Admin login instead' : 'Doctor login instead' }}
+        </button>
       </div>
       <div style="margin-top: 12px; text-align: center; font-size: 13px;">
         <router-link to="/">← Back to Home</router-link>

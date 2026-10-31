@@ -1,200 +1,228 @@
-# Cura. HMS — Hospital Management System
+<p align="center">
+  <img src="logo.svg" width="120" height="120" alt="Cura. HMS Logo" />
+</p>
 
-A full-stack **Hospital Management Information System (HMIS)** with real **NFC
-card integration**: the dashboard can scan physical RFID cards or Android phones
-(card emulation) to instantly identify patients and doctors.
+<h1 align="center">Cura. HMS</h1>
 
-> **One system, three components:**
-> `cura_web` (web dashboard + API + ESP32 firmware) · `cura_app` (Android NFC card emulation) · docs
+<p align="center">
+  <b>Enterprise Hospital Management Information System with Dual-Mode Physical &amp; Digital NFC Card Integration</b>
+</p>
 
----
+<p align="center">
+  <img src="https://img.shields.io/badge/Architecture-FastAPI%20%2B%20Vue%203%20SPA-007AFF?style=for-the-badge" alt="Architecture" />
+  <img src="https://img.shields.io/badge/Database-PostgreSQL%2016-336791?style=for-the-badge&logo=postgresql&logoColor=white" alt="Database" />
+  <img src="https://img.shields.io/badge/Hardware-ESP32--S3%20%2B%20PN532-E7352C?style=for-the-badge&logo=espressif&logoColor=white" alt="Hardware" />
+  <img src="https://img.shields.io/badge/Protocol-Web%20Serial%20%26%20Web%20NFC-10B981?style=for-the-badge" alt="Protocol" />
+  <img src="https://img.shields.io/badge/Container-Docker%20Compose-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker" />
+  <img src="https://img.shields.io/badge/Mobile-Flutter%20Android%20HCE-02569B?style=for-the-badge&logo=flutter&logoColor=white" alt="Flutter" />
+</p>
 
-## Table of Contents
-
-1. [What it does](#what-it-does)
-2. [Repo structure](#repo-structure)
-3. [How everything fits together](#how-everything-fits-together)
-4. [NFC flow](#nfc-flow)
-5. [Running the web system](#running-the-web-system)
-6. [Running the Android app](#running-the-android-app)
-7. [Firmware & hardware](#firmware--hardware)
-8. [Default accounts](#default-accounts)
-9. [Configuration & security](#configuration--security)
-10. [Documentation](#documentation)
-11. [License](#license)
+> **Executive Summary:**  
+> Cura. HMS is an end-to-end clinical hospital management system engineered to modernize healthcare administration. Featuring an Apple-inspired Liquid Glass user interface, asynchronous microservices architecture, and browser-native dual-mode RFID/NFC hardware connectivity, Cura eliminates manual terminal input by enabling immediate patient identification via physical MyKad/CUID smart cards and Android Host Card Emulation (HCE).
 
 ---
 
-## What it does
-
-- **Patient management** — register, search, view, edit, discharge and **re-admit** patients.
-- **Clinical workflows** — vital signs, lab tests, prescriptions, medical records, surgeries.
-- **Staff & pharmacy** — doctor accounts, drug inventory & categories, digital prescriptions.
-- **Operations** — equipment/assets, vendors, accounts, payroll.
-- **NFC identification** — tap a physical card **or** an Android phone at the reader to pull up
-  the patient within seconds (no typing needed).
-- **Card programming** — write the patient ID onto a physical Mifare **CUID** card straight
-  from the web dashboard using the ESP32-S3.
-- **Auto-increment IDs** — every entity gets a stable, human-readable `C00A0001`-style ID
-  that fits the NFC card's 4-byte UID space.
-- **Device-aware scanning** — the browser shows the correct scanner for the device you're on
-  (phone NFC on phones, ESP32 via USB on desktops).
+## 📑 Language Options / Pilihan Bahasa
+* 🇬🇧 **[English Documentation (Current)](README.md)**
+* 🇲🇾 **[Dokumentasi Bahasa Melayu](README_MY.md)**
 
 ---
 
-## Repo structure
-
-```
-Amjad/
-├── README.md               # This document (start here)
-├── architecture.md         # Deep-dive: architecture, data model, API, ports
-├── known_bugs.md           # Hardware / Android bugs & fixes log
-├── LICENSE                 # Proprietary — all rights reserved
-│
-├── cura_web/               # WEB SYSTEM
-│   ├── README.md           # Web dashboard docs
-│   ├── docker-compose.yml  # db + backend + frontend
-│   ├── backend/            # FastAPI (Python) — REST API, models, idgen
-│   ├── frontend/           # Vue 3 + Vite SPA — dashboard UI, NFC & serial
-│   └── esp32_nfc/          # ESP32-S3 firmware + its README
-│
-├── cura_app/               # ANDROID APP (HCE card emulation)
-│   ├── README.md
-│   ├── lib/                # Flutter UI + card store
-│   └── android/            # HCE service, AID registration
-│
-└── (excluded from git)     # Reference/, Backups/, "Esp32 & Testing codes/", *.env
-```
-
----
-
-## How everything fits together
+## 🏛️ High-Level System Architecture
 
 ```text
- ┌─────────────────────────────────────────────────────────────────────┐
- │                         cura_web (Docker)                          │
- │                                                                     │
- │  cura_frontend (Nginx, Vue SPA) ──/api,/uploads──▶ cura_backend     │
- │                                                         │  asyncpg  │
- │                                                         ▼           │
- │                                                  cura_db (Postgres) │
- └─────────────────────────────────────────────────────────────────────┘
-        ▲                                              ▲
-        │ Web Serial API (USB)                        │ Web NFC / NDEFReader
-        │                                              │
-   ESP32-S3 + PN532                               Android phone
-   (read + write CUID)                            (cura_app — HCE card)
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│                                   CLIENT TIERS & SENSORS                               │
+├──────────────────────────────────────┬─────────────────────────────────────────────────┤
+│           DESKTOP WORKSTATION        │                  MOBILE CLIENTS                 │
+│      Google Chrome / Edge (Blink)    │       Android Chrome       │ Android Smartphone │
+│         Web Serial API (USB)         │       Web NFC (NDEF)       │ Flutter (cura_app) │
+└──────────────────┬───────────────────┴──────────────┬─────────────┴──────────┬─────────┘
+                   │                                  │                        │
+                   ▼ (115200 Baud CDC)                ▼ (Direct Tag Poll)      │ HCE APDU
+┌──────────────────────────────────────┐              │                        │ (AID F222222222)
+│      ESP32-S3 EMBEDDED CONTROLLER    │              │                        │
+│   Native USB CDC + HID Keyboard      │              │                        ▼
+│      I2C Bus (SDA: GPIO8, SCL: GPIO9)│              │               ┌──────────────────┐
+│                    │                 │              │               │ PN532 Transceiver│
+│                    ▼                 │              │               │ (ISO-DEP Reader) │
+│       Adafruit PN532 Transceiver     │              │               └────────┬─────────┘
+│   (Mifare CUID Gen1a/2 Block 0 Write)│              │                        │
+└──────────────────┬───────────────────┘              │                        │
+                   │ Raw UID / Token Stream           │                        │
+                   ▼                                  ▼                        │
+┌──────────────────────────────────────────────────────────────────────────────┴─────────┐
+│                             REVERSE PROXY & SECURITY LAYER                             │
+│       Nginx Proxy Manager / Frontend Gateway (Port 80/8087) + Strict Permissions       │
+└──────────────────────────────────────┬─────────────────────────────────────────────────┘
+                                       │ REST API (JSON / Axios)
+                                       ▼
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│                               FASTAPI BACKEND SERVICES                                 │
+│  FastAPI (Python 3.12, Uvicorn) • Request-ID Tracing • CORS • Async SQLAlchemy 2.0     │
+│   Auth • Patients • Doctors • Pharmacy • Laboratory • Clinical Records • Operations    │
+└──────────────────────────────────────┬─────────────────────────────────────────────────┘
+                                       │ Asyncpg Pool (Internal DNS: cura_db:5432)
+                                       ▼
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│                                   PERSISTENT DATABASE                                  │
+│               PostgreSQL 16 Engine • UUID Primary Keys • Asia/Kuala_Lumpur             │
+└────────────────────────────────────────────────────────────────────────────────────────┘
 ```
-
-- **Desktop/laptop browsers** talk to the **ESP32-S3** over USB with the Web Serial API —
-  full read **and** write.
-- **Android phones** can **read** NFC tags directly in the browser (Web NFC), and the
-  `cura_app` lets the phone *behave as* the patient's card via HCE when held to the reader.
-- The **patient/doctor ID** on the card is the same `C00A0001`-format ID stored in the
-  database, so a tap == a lookup.
 
 ---
 
-## NFC flow
+## 🔌 Hardware Circuit & Wiring Schematic
 
-### Scan (search)
-```text
-tap card/phone
-   → reader captures 8-char ID
-   → browser search box is filled & patients list filters
-   → click the row to open the full record
-```
+The terminal scanning station utilizes an **ESP32-S3 Dev Module** interfaced with an **Adafruit PN532 NFC/RFID transceiver module** over native I2C.
 
-### Write (program a blank card)
-```text
-Patient Detail → "Write Card"
-   → browser sends:  WRITE C00A0001<CR>
-   → ESP32 arms [UI_ARMED] → "tap card now"
-   → on success [UI_SUCCESS] / on failure [UI_FAILED] popups
-```
-Writing requires **CUID (Gen2/Gen1a)** Mifare cards — standard cards lock Block 0.
+<p align="center">
+  <img src="Schematic_cura_2026-10-31.png" width="860" alt="Hardware Circuit Schematic" />
+</p>
+
+* 📄 **Download Printable Schematic PDF:** [`Schematic_cura_2026-10-31.pdf`](Schematic_cura_2026-10-31.pdf)
+* 📄 **Detailed Wiring & Pinout Guide:** [`esp32_nfc/PINOUT_AND_WIRING.md`](esp32_nfc/PINOUT_AND_WIRING.md)
+* 📄 **Firmware Flashing Guide:** [`esp32_nfc/FLASHING_AND_SETUP.md`](esp32_nfc/FLASHING_AND_SETUP.md)
 
 ---
 
-## Running the web system
+## 📌 Hardware Pinout Table
 
-Prerequisites: Docker + Docker Compose, Google Chrome/Edge.
+| ESP32-S3 MCU Pin | PN532 Module Pin | Signal Description | Electrical Specifications |
+|:----------------:|:----------------:|:------------------|:-------------------------|
+| **GPIO 8** | `SDA` | I2C Serial Data Bus | 3.3V Logic Level (Internal Pull-Up) |
+| **GPIO 9** | `SCL` | I2C Serial Clock Bus | 3.3V Logic Level (Internal Pull-Up) |
+| **GPIO 4** | `IRQ` | Hardware Interrupt Request | Active-Low Digital Signal |
+| **GPIO 5** | `RSTPD_N` (RST) | Hardware Reset Line | Active-Low Digital Output |
+| **3.3V** / **5V** | `VCC` | Module Main Power Rail | 3.3V DC (Recommended) / 5.0V DC |
+| **GND** | `GND` | Common Ground | 0V Reference |
+| **USB D- (GPIO 19)** | Type-C USB Port | USB 2.0 Differential Data Negative | Full-Speed Native USB Controller |
+| **USB D+ (GPIO 20)** | Type-C USB Port | USB 2.0 Differential Data Positive | Full-Speed Native USB Controller |
+
+*Important DIP Switch Setting:* Set PN532 hardware switches to **I2C Mode** (`SEL0 = 1 (High)`, `SEL1 = 0 (Low)`).
+
+---
+
+## 🚀 Key Features & Algorithmic Highlights
+
+1. **Dual-Mode Identification Architecture:**
+   - **Physical Smart Cards:** Scans standard 4-byte Mifare UID, CUID cards, and Malaysian Government MyKad RFID chip UIDs (`CF289949`).
+   - **Android Host Card Emulation (HCE):** Interacts with `cura_app` via custom ISO-DEP APDU commands (`SELECT AID F222222222`), retrieving virtual patient identification tokens directly from patient smartphones.
+2. **CUID Block 0 Programming Engine:**
+   - Universal block zero write routine executing Gen2 backdoor unlock commands with an automatic fallback to Gen1a APDU sequences (`0x40`, `0x43`).
+   - Enables clinicians to write formatted patient identifiers (`C00A0001`) onto physical cards straight from the web browser via Web Serial.
+3. **Deterministic Sequential ID Generation:**
+   - Centralized backend ID generator (`core/idgen.py`) maintaining synchronous entity prefix spaces:
+     - Patients: `C00A0001` - `C00A9999`
+     - Medical Practitioners: `C01A0001` - `C01A9999`
+     - Prescriptions: `C02A0001`, Lab: `C03A0001`, Vitals: `C04A0001`, Records: `C05A0001`
+4. **Device-Aware Operational Gateway:**
+   - Client-side runtime detection (`useDevice.js`) ensuring hardware capabilities match terminal operating systems (disabling serial triggers on mobile handsets and locking mobile-only Web NFC sensors on desktop browsers).
+5. **Patient Re-Admission Lifecycle:**
+   - Preserves patient medical history and hardware UID index integrity across multiple hospital stays without generating orphaned or duplicated records.
+
+---
+
+## 📂 Repository Structure Tree
+
+```text
+.
+├── logo.svg                                # Vector project emblem
+├── favicon.svg                             # Minimalist C. SVG favicon
+├── favicon.ico                             # Multi-resolution desktop favicon
+├── og-image.png                            # Social link preview banner (1200x630)
+├── Schematic_cura_2026-10-31.png           # Hardware circuit wiring graphic
+├── Schematic_cura_2026-10-31.pdf           # Vector schematic printable document
+├── README.md                               # Primary system documentation (English)
+├── README_MY.md                            # Primary system documentation (Bahasa Melayu)
+├── LICENSE                                 # Educational usage agreement
+│
+├── cura_web/                               # CORE WEB APPLICATION (DOCKER)
+│   ├── README.md                           # Web stack technical overview
+│   ├── README_MY.md                        # Web stack technical overview (Bahasa Melayu)
+│   ├── API_DOCUMENTATION.md                # Comprehensive REST API specifications
+│   ├── API_DOCUMENTATION_MY.md             # REST API specifications (Bahasa Melayu)
+│   ├── DOCKER_AND_SERVICES.md              # Container topology & deployment guide
+│   ├── DOCKER_AND_SERVICES_MY.md           # Container deployment (Bahasa Melayu)
+│   ├── SECURITY_AND_ARCHITECTURE.md        # Cryptography, auth & security architecture
+│   ├── SECURITY_AND_ARCHITECTURE_MY.md     # Security architecture (Bahasa Melayu)
+│   ├── docker-compose.yml                  # 3-tier microservice orchestration
+│   ├── .env.example                        # Template environment configuration
+│   │
+│   ├── backend/                            # FASTAPI APPLICATION (PYTHON 3.12)
+│   │   ├── Dockerfile                      # Async Python container runtime
+│   │   ├── requirements.txt                # Pinned production dependencies
+│   │   └── app/
+│   │       ├── main.py                     # API entrypoint, migrations & lifespan
+│   │       ├── core/                       # Database engine, security & middleware
+│   │       ├── models/                     # SQLAlchemy ORM database schemas
+│   │       ├── routers/                    # Domain endpoints (patients, doctors, etc.)
+│   │       └── schemas/                    # Pydantic request/response validation models
+│   │
+│   └── frontend/                           # VUE 3 CLIENT DASHBOARD (VITE + NGINX)
+│       ├── Dockerfile                      # Multi-stage production Nginx image
+│       ├── nginx.conf                      # Gateway config & Web NFC permissions
+│       ├── vite.config.js                  # Vite configuration & asset hashing
+│       ├── index.html                      # Entry HTML with structured JSON-LD & meta
+│       ├── public/                         # Static icons, robots.txt, sitemap, llms.txt
+│       └── src/
+│           ├── App.vue                     # Liquid glass layout shell & corner badge
+│           ├── stores/                     # Pinia reactive state (serial, theme)
+│           ├── composables/                # Reusable sensor & dialog hooks
+│           ├── components/                 # Dual-mode scan bars & write buttons
+│           └── views/                      # Clinical page components
+│
+├── cura_app/                               # PATIENT MOBILE APP (FLUTTER)
+│   ├── README.md                           # Flutter HCE card emulator guide
+│   ├── README_MY.md                        # Flutter HCE guide (Bahasa Melayu)
+│   ├── lib/                                # Dart application source & UI widgets
+│   └── android/                            # Native Kotlin HostApduService & AID config
+│
+└── esp32_nfc/                              # HARDWARE TERMINAL FIRMWARE
+    ├── README.md                           # Embedded hardware system guide
+    ├── README_MY.md                        # Hardware guide (Bahasa Melayu)
+    ├── PINOUT_AND_WIRING.md                # Electrical pinout & schematic analysis
+    ├── PINOUT_AND_WIRING_MY.md             # Electrical pinout (Bahasa Melayu)
+    ├── FLASHING_AND_SETUP.md               # Toolchain installation & flashing guide
+    ├── FLASHING_AND_SETUP_MY.md            # Toolchain guide (Bahasa Melayu)
+    └── esp32_s3_scanner/
+        └── esp32_s3_scanner.ino            # Dual-mode CUID + HCE Arduino C++ firmware
+```
+
+---
+
+## ⚡ Quick Start Guide
+
+### 1. Web Application Deployment (Docker)
+
+Ensure Docker and Docker Compose are installed on your host system:
 
 ```bash
+# Navigate to web root
 cd cura_web
-cp .env.example .env      # then edit credentials if desired
+
+# Create production environment file from template
+cp .env.example .env
+
+# Build and start services
 docker compose up --build -d
 ```
 
-| What | URL |
-|------|-----|
-| Dashboard | `http://localhost:8087` |
-| API docs (Swagger) | `http://localhost:8800/docs` |
+Access clinical terminals:
+* **Web Dashboard:** `http://localhost:8087`
+* **Interactive API Documentation:** `http://localhost:8800/docs`
+* **Default Administrator:** `admin@mail.com` | `Password@123`
 
-> Ports come from `.env` (`FRONTEND_PORT`, `BACKEND_PORT`, `POSTGRES_PORT`).
+### 2. Hardware Flashing (ESP32-S3)
 
----
-
-## Running the Android app
-
-```bash
-cd cura_app
-flutter pub get
-flutter run          # Android device with NFC
-```
-
-See [`cura_app/README.md`](cura_app/README.md). On Samsung phones you must set
-the app as the default Tap & Pay service for HCE to work.
+1. Open Arduino IDE and install the `Adafruit PN532` library.
+2. Open `esp32_nfc/esp32_s3_scanner/esp32_s3_scanner.ino`.
+3. Set **Tools $\rightarrow$ Board** to `ESP32S3 Dev Module`.
+4. Set **Tools $\rightarrow$ USB CDC On Boot** to `Enabled`.
+5. Connect your board via USB and upload the sketch.
+6. Connect the terminal via Google Chrome / Edge on desktop and pair via **Settings $\rightarrow$ Connect Scanner**.
 
 ---
 
-## Firmware & hardware
-
-`cura_web/esp32_nfc/esp32_s3_scanner.ino` targets the **ESP32-S3 + Adafruit PN532**
-(I2C: SDA=8, SCL=9; HID + Web Serial).
-
-- Must have **USB CDC On Boot = Enabled** in Arduino IDE.
-- Protocol lines the dashboard listens for: `[WEB_READ]:<uid>`, `[UI_ARMED]`,
-  `[UI_SUCCESS]`, `[UI_FAILED]`.
-- See [`cura_web/esp32_nfc/README.md`](cura_web/esp32_nfc/README.md).
-
----
-
-## Default accounts
-
-On first startup the backend seeds one administrator.
-
-| Role | Login | Password |
-|------|-------|----------|
-| Admin | `admin@mail.com` | `Password@123` |
-
-Doctors log in with their **employee number** (e.g. `C01A0001`) + the password set for them.
-
----
-
-## Configuration & security
-
-- **Never commit `.env`.** The repo ships only `.env.example` with placeholders.
-- Set a strong `SECRET_KEY` in production (JWT signing).
-- Change the seeded admin password after first login.
-- Git-ignored: `Reference/`, `Backups/`, `Esp32 & Testing codes/`, `ocsession.txt`,
-  databases, uploads, build artifacts.
-
----
-
-## Documentation
-
-| Doc | Contents |
-|-----|----------|
-| [`architecture.md`](architecture.md) | Architecture diagram, tech stack, data model, ID scheme, API, ports |
-| [`cura_web/README.md`](cura_web/README.md) | Web dashboard-specific docs |
-| [`esp32_nfc/README.md`](cura_web/esp32_nfc/README.md) | Hardware wiring, deps, upload steps |
-| [`cura_app/README.md`](cura_app/README.md) | Android HCE app docs |
-| [`known_bugs.md`](known_bugs.md) | Known bugs & workarounds (PN532, Android 16, Samsung) |
-
----
-
-## License
-
-**Proprietary & Confidential** — all rights reserved. This is a closed source
-Final Year Project; do not copy, modify, or redistribute without permission.
+## 📜 License
+* Developed for **Educational Purposes Only**.

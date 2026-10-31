@@ -75,6 +75,7 @@ void processSerialCommands() {
           
           currentMode = MODE_ARMED_WRITE;
           Serial.println("[UI_ARMED]"); // Signal for Web Dashboard
+          Serial.flush();
           Serial.print("[ARMED] Target UID: ");
           for (int i = 0; i < 4; i++) {
             if (targetNewUid[i] < 0x10) Serial.print("0");
@@ -89,6 +90,37 @@ void processSerialCommands() {
       }
     }
   }
+}
+
+// Try to read a patient ID from an Android Host Card Emulation (HCE) card.
+// HCE cards present a random UID; the real token is returned via a SELECT AID
+// APDU. Returns true + fills `out` (up to outLen) if a token was received.
+bool readHceToken(char *out, uint8_t outLen) {
+  uint8_t selectAid[] = {
+    0x00, 0xA4, 0x04, 0x00,
+    0x05,
+    0xF2, 0x22, 0x22, 0x22, 0x22,   // Cura AID
+    0x00
+  };
+  uint8_t resp[64];
+  uint8_t respLen = sizeof(resp);
+
+  delay(300); // let the target settle before APDU exchange
+
+  bool ok = nfc.inDataExchange(selectAid, sizeof(selectAid), resp, &respLen);
+
+  if (ok && respLen >= 2) {
+    uint8_t sw1 = resp[respLen - 2];
+    uint8_t sw2 = resp[respLen - 1];
+    if (sw1 == 0x90 && sw2 == 0x00) {
+      int pl = respLen - 2;
+      if (pl > outLen - 1) pl = outLen - 1;
+      memcpy(out, resp, pl);
+      out[pl] = '\0';
+      return true;
+    }
+  }
+  return false;
 }
 
 // Function to verify if two 4-byte arrays match (Handles reversed order sticker quirk)
@@ -121,6 +153,7 @@ bool performUniversalBlockZeroWrite(uint8_t currentUid[4]) {
     if (nfc.readPassiveTargetID(PN532_MIFARE_ISO14443A, newUid, &newUidLen, 500)) {
       if (newUidLen == 4 && uidMatches(newUid, targetNewUid)) {
         Serial.println("[UI_SUCCESS]"); // Signal for Web Dashboard
+        Serial.flush();
         return true;
       }
     }
@@ -140,11 +173,13 @@ bool performUniversalBlockZeroWrite(uint8_t currentUid[4]) {
   if (nfc.readPassiveTargetID(PN532_MIFARE_ISO14443A, newUid2, &newUidLen2, 500)) {
     if (newUidLen2 == 4 && uidMatches(newUid2, targetNewUid)) {
       Serial.println("[UI_SUCCESS]"); // Signal for Web Dashboard
+      Serial.flush();
       return true;
     }
   }
   
   Serial.println("[UI_FAILED]"); // Signal for Web Dashboard
+  Serial.flush();
   return false;
 }
 
@@ -170,16 +205,30 @@ void loop() {
         if (result) currentMode = MODE_READ_SCANNER;
       } else {
         Serial.println("[UI_FAILED]");
+        Serial.flush();
       }
       delay(2500);
     } 
     else if (currentMode == MODE_READ_SCANNER) {
-      // 1. Send data to Web Dashboard Widget 1 via WebSerial
-      Serial.println("[WEB_READ]:" + uidStr);
-      
-      // 2. Type data directly into input field via HID Keyboard (Widget 2)
-      Keyboard.println(uidStr);
-      
+      // Determine the value to report:
+      //  - Android HCE cards always start with 0x08 and expose a random UID; use the APDU token.
+      //  - Physical cards (e.g. MyKad IC, Mifare) report their real hardware UID immediately.
+      String readValue = uidStr;
+
+      if (uid[0] == 0x08) {
+        char token[64];
+        if (readHceToken(token, sizeof(token))) {
+          readValue = String(token);
+        }
+      }
+
+      // 1. Send data to Web Dashboard via WebSerial and FLUSH immediately
+      Serial.println("[WEB_READ]:" + readValue);
+      Serial.flush();
+
+      // 2. Type data directly into input field via HID Keyboard
+      Keyboard.println(readValue);
+
       delay(1500); // Cooldown to prevent spam
     }
   }

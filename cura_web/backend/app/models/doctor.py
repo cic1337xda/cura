@@ -15,5 +15,7 @@ class Doctor(Base):
     password: Mapped[str] = mapped_column(String(200))
     department: Mapped[str | None] = mapped_column(String(200))
     ic_number: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    ic_card_uid: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    nationality: Mapped[str | None] = mapped_column(String(100), default="Malaysian", nullable=True)
     employee_number: Mapped[str] = mapped_column(String(200), unique=True)
     avatar: Mapped[str | None] = mapped_column(String(200), default="defaultimg.jpg")

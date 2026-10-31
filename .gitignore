@@ -1,48 +1,61 @@
-# ── Secrets ──────────────────────────────────────────────
+# Python & Virtual Environments
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv/
+.python-version
+*.egg-info/
+.pytest_cache/
+
+# Pre-Production, Test Scripts & Sockets
+Pre-production Code/
+test_*.py
+*.sock
+
+# Local / Private Development Folders
+Esp32 & Testing codes/
+Reference/
+Backups/
+
+# Database & Persistent Storage
+*.db
+*.sqlite
+*.sqlite3
+postgres_data/
+uploads/
+
+# Environment Variables & Secrets (Keep .env.example)
 .env
+.env.local
+.env.*.local
 .env.*
 !.env.example
 
-# ── Python ───────────────────────────────────────────────
-__pycache__/
-*.pyc
-*.pyo
-*.egg-info/
-.pytest_cache/
-venv/
-env/
-
-# ── Node / Frontend build ───────────────────────────────
+# Node / Frontend Build
 node_modules/
 dist/
 npm-debug.log
 yarn-error.log
 
-# ── Local data / runtime ────────────────────────────────
-postgres_data/
-uploads/
+# Session Logs & Work Artifacts
+ocsession.txt
 *.log
 
-# ── OS files ─────────────────────────────────────────────
+# Docker, IDE & OS Artifacts
 .DS_Store
 Thumbs.db
 desktop.ini
+.idea/
+.vscode/
+*.swp
+*~
 
-# ── Non-deliverable folders ─────────────────────────────
-# Legacy / inspiration source code (not part of the shipped product)
-Reference/
-
-# Testing sandboxes and one-off experiments
-Esp32 & Testing codes/
-
-# Older backups — kept off the repository
-Backups/
-
-# Local opencode session notes
-ocsession.txt
-
-# ── Flutter (cura_app) sanity guards ────────────────────
-# (cura_app/.gitignore also covers these)
+# Mobile App Build Artifacts
 cura_app/build/
 cura_app/.dart_tool/
 cura_app/.idea/
